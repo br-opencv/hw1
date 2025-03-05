@@ -1,6 +1,11 @@
 import cv2
 import numpy as np
+import os
+
 # 輸入影像(1.jpg) -> 灰階轉換(gray_1.jpg) -> 濾波(filter_1.jpg) -> 邊緣檢測(edge _1.jpg) -> 二值化(bin_1.jpg) -> 形態學(morphology_1.jpg) -> 直線偵測 -> 繪製車道線(line_1.jpg)
+
+folder_path = 'output'
+os.makedirs(folder_path, exist_ok=True)
 
 # 1. 載入輸入影像
 img = cv2.imread('1.jpg')
@@ -10,39 +15,39 @@ if img is None:
 
 # 2. 灰階轉換
 gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-cv2.imwrite('gray_1.jpg', gray)
+cv2.imwrite(folder_path+'/00_gray_1.jpg', gray)
 
 # 3. 濾波 (使用高斯模糊降低雜訊)
 # 注意: 根據影像特性，kernel 大小可以調整 (例如 (5,5) )
 filtered = cv2.GaussianBlur(gray, (5, 5), 0)
-cv2.imwrite('filter_1.jpg', filtered)
+cv2.imwrite(folder_path+'/01_filter_1.jpg', filtered)
 
 # 4. 邊緣檢測 (使用 Canny 邊緣檢測)
 # 可根據影像情況調整 low_threshold 與 high_threshold
-low_threshold = 50
+low_threshold = 30
 high_threshold = 100
 edges = cv2.Canny(filtered, low_threshold, high_threshold)
-cv2.imwrite('edge_1.jpg', edges)
+cv2.imwrite(folder_path+'/02_edge_1.jpg', edges)
 
 # 5. 二值化 (這裡直接使用全局閥值，也可用adaptiveThreshold)
 # 由於 Canny 已經產生的影像為二值影像，可視需求做額外量化處理
-ret, binary = cv2.threshold(edges, 50, 255, cv2.THRESH_BINARY)
-cv2.imwrite('bin_1.jpg', binary)
+ret, binary = cv2.threshold(edges, 100, 255, cv2.THRESH_BINARY)
+cv2.imwrite(folder_path+'/03_bin_1.jpg', binary)
 
 # 6. 型態學處理 (使用閉運算來補足斷裂處，連接邊線)
 # 定義結構元，大小可根據實際情況調整
 kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5,5))
 morph = cv2.morphologyEx(binary, cv2.MORPH_CLOSE, kernel, iterations=1)
-cv2.imwrite('morphology_1.jpg', morph)
+cv2.imwrite(folder_path+'/04_morphology_1.jpg', morph)
 
 # 7. 直線偵測 (使用霍夫直線變換)
 # 邊線偵測影像為 morph
 lines = cv2.HoughLinesP(morph, 
-                        rho=1, 
+                        rho=2, 
                         theta=np.pi/180, 
-                        threshold=50, 
-                        minLineLength=50, 
-                        maxLineGap=10)
+                        threshold=200, 
+                        minLineLength=60, 
+                        maxLineGap=6)
 
 # 建立一個複製影像用來繪製直線，使用彩色方便觀察
 line_img = img.copy()
@@ -55,10 +60,10 @@ if lines is not None:
 else:
     print("未偵測到直線")
 
-cv2.imwrite('line_1.jpg', line_img)
+cv2.imwrite(folder_path+'/05_line_1.jpg', line_img)
 
 # 如果有需要也可顯示最終結果
-cv2.namedWindow('Detected Lines', cv2.WINDOW_NORMAL)
-cv2.imshow('Detected Lines', line_img)
-cv2.waitKey(0)
-cv2.destroyAllWindows()
+# cv2.namedWindow('Detected Lines', cv2.WINDOW_NORMAL)
+# cv2.imshow('Detected Lines', line_img)
+# cv2.waitKey(0)
+# cv2.destroyAllWindows()
