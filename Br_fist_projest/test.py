@@ -35,7 +35,7 @@ for i in range(1, 4):
 
 #自適應直方圖均衡化
 clahe_imgs = []
-clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
+clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(9, 9))
 for i in range(1, 4):
     gray = cv2.cvtColor(filtered_imgs[i-1], cv2.COLOR_BGR2GRAY)
     clahe_img = clahe.apply(gray)
@@ -45,7 +45,7 @@ for i in range(1, 4):
 # 邊緣檢測
 
 low_threshold = 180
-high_threshold = 150
+high_threshold = 160
 
 edges_imgs = []
 for i in range(1, 4):
@@ -72,7 +72,7 @@ for i in range(1, 4):
 # 有使用canny，所以不再使用二值化
 
 # 型態學處理
-kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5,5))
+kernel = cv2.getStructuringElement(cv2.MORPH_CROSS, (2, 2))
 dilation_imgs = []
 erosion_imgs = []
 for i in range(1, 4):
@@ -96,15 +96,17 @@ for i in range(1, 4):
         continue
     edges = edges_imgs[i-1]
     erosion = erosion_imgs[i-1]
-    lines = cv2.HoughLinesP(edges, 1, np.pi/180, 100, minLineLength=175, maxLineGap=7)
-    # lines = cv2.HoughLinesP(erosion, 1, np.pi/180, 100, minLineLength=175, maxLineGap=7)
+    dilation = dilation_imgs[i-1]
+    # lines = cv2.HoughLinesP(edges, 1, np.pi/180, 100, minLineLength=160, maxLineGap=6)
+    # lines = cv2.HoughLinesP(erosion, 1, np.pi/180, 100, minLineLength=175, maxLineGap=10)
+    lines = cv2.HoughLinesP(dilation, 1, np.pi/180, 100, minLineLength=160, maxLineGap=5)
     if lines is not None:
         for line in lines:
             x1, y1, x2, y2 = line[0]
             cv2.line(img, (x1, y1), (x2, y2), (0, 255, 0), 4)
     else:
         print(f"無法檢測到直線 {i}.jpg")
-    cv2.imwrite(f"{output_dir}/hough_{i}.jpg", img)
+    cv2.imwrite(f"{output_dir}/output{i}.jpg", img)
 
 
 # 繪製車道線
