@@ -33,27 +33,38 @@ for i in range(1, 4):
     filtered_imgs.append(filtered)
     cv2.imwrite(f"{output_dir}/filtered_{i}.jpg", filtered)
 
+#自適應直方圖均衡化
+clahe_imgs = []
+clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
+for i in range(1, 4):
+    gray = cv2.cvtColor(filtered_imgs[i-1], cv2.COLOR_BGR2GRAY)
+    clahe_img = clahe.apply(gray)
+    clahe_imgs.append(clahe_img)
+    cv2.imwrite(f"{output_dir}/clahe_{i}.jpg", clahe_img)
+
 # 邊緣檢測
 
 low_threshold = 180
-high_threshold = 100
+high_threshold = 150
 
 edges_imgs = []
 for i in range(1, 4):
     gray = cv2.cvtColor(filtered_imgs[i-1], cv2.COLOR_BGR2GRAY)
     
-    # Sobel 邊緣檢測
-    sobelx = cv2.Sobel(gray, cv2.CV_64F, 1, 0, ksize=5)
-    sobely = cv2.Sobel(gray, cv2.CV_64F, 0, 1, ksize=5)
-    cv2.imwrite(f"{output_dir}/sobelx_{i}.jpg", sobelx)
-    cv2.imwrite(f"{output_dir}/sobely_{i}.jpg", sobely)
+    # # Sobel 邊緣檢測
+    # sobelx = cv2.Sobel(gray, cv2.CV_64F, 1, 0, ksize=5)
+    # sobely = cv2.Sobel(gray, cv2.CV_64F, 0, 1, ksize=5)
+    # cv2.imwrite(f"{output_dir}/sobelx_{i}.jpg", sobelx)
+    # cv2.imwrite(f"{output_dir}/sobely_{i}.jpg", sobely)
 
-    # Laplacian 邊緣檢測
-    laplacian = cv2.Laplacian(gray, cv2.CV_64F , 1)
-    cv2.imwrite(f"{output_dir}/laplacian_{i}.jpg", laplacian)
+    # # Laplacian 邊緣檢測
+    # laplacian = cv2.Laplacian(gray, cv2.CV_64F , 1)
+    # cv2.imwrite(f"{output_dir}/laplacian_{i}.jpg", laplacian)
 
     # Canny 邊緣檢測
+    edges = cv2.Canny(clahe_imgs[i-1], low_threshold, high_threshold)
     edges = cv2.Canny(filtered_imgs[i-1], low_threshold, high_threshold)
+
     edges_imgs.append(edges)
     cv2.imwrite(f"{output_dir}/edges_{i}.jpg", edges)
 
@@ -86,10 +97,11 @@ for i in range(1, 4):
     edges = edges_imgs[i-1]
     erosion = erosion_imgs[i-1]
     lines = cv2.HoughLinesP(edges, 1, np.pi/180, 100, minLineLength=175, maxLineGap=7)
+    # lines = cv2.HoughLinesP(erosion, 1, np.pi/180, 100, minLineLength=175, maxLineGap=7)
     if lines is not None:
         for line in lines:
             x1, y1, x2, y2 = line[0]
-            cv2.line(img, (x1, y1), (x2, y2), (0, 255, 0), 2)
+            cv2.line(img, (x1, y1), (x2, y2), (0, 255, 0), 4)
     else:
         print(f"無法檢測到直線 {i}.jpg")
     cv2.imwrite(f"{output_dir}/hough_{i}.jpg", img)
