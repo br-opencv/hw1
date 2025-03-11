@@ -43,7 +43,6 @@ for i in range(1, 4):
     cv2.imwrite(f"{output_dir}/clahe_{i}.jpg", clahe_img)
 
 # 邊緣檢測
-
 low_threshold = 180
 high_threshold = 160
 
